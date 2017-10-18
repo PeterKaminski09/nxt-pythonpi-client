@@ -9,11 +9,11 @@ cd ~/Downloads
 wget https://github.com/Eelviny/nxt-python/archive/v2.2.2.tar.gz
 tar xzf nxt-python-2.2.2.tar.gz
 cd nxt-python-2.2.2
-python setup.py install
+sudo python setup.py install
 cd
 mkdir automated-pylog
 sudo crontab -l > mycron
 echo "@reboot sh /home/pi/nxt-pythonpi-client/start.sh >/home/pi/automated-pylog/cronlog 2>&1" >> mycron
 sudo crontab mycron
 echo "Restart required...restarting now"
-shutdown -r
+sudo shutdown -r now
