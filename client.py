@@ -216,7 +216,10 @@ def on_execute_code (*args):
         sock = BlueSock(params['address'])
         if sock:
             brick = sock.connect()
-            execute_commands(params['commands'], brick)
+            try:
+                execute_commands(params['commands'], brick)
+            except:
+                print("Error thrown executing commands")
             sock.close()
             print('finished code')
         else:
