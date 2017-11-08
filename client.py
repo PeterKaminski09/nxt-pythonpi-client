@@ -5,6 +5,7 @@ from nxt.sensor import Light, Sound, Touch, Ultrasonic
 from nxt.sensor import PORT_1, PORT_2, PORT_3, PORT_4
 import sys
 
+# Global variables
 socketIO = SocketIO('http://robocode-server.herokuapp.com', 80)
 mac_addresses = []
 ports = {
@@ -17,6 +18,34 @@ ports = {
     'C': PORT_C
 }
 
+
+# Function which determines the output of the conditional statement based on the given sensor
+def compute_check(cond, sensor):
+    if 'gt' not in cond or 'gte' not in cond or 'lt' not in cond or 'lte' not in cond or 'e' not in cond or 'ne' not in cond or 'check' not in cond:
+        return
+
+    gt = cond['gt']
+    gte = cond['gte']
+    lt = cond['lt']
+    lte = cond['lte']
+    e = cond['e']
+    ne = cond['ne']
+    check = cond['check']
+
+    print(sensor.get_sample())
+    if gt:
+        return sensor.get_sample() > check
+    elif gte:
+        return sensor.get_sample() >= check
+    elif lt:
+        return sensor.get_sample() < check
+    elif lte:
+        return sensor.get_sample() <= check
+    elif e:
+        return sensor.get_sample() == check
+    else:
+        return sensor.get_sample() != check
+
 ### MOTOR ###
 def execute_motor(command, brick):
     if 'brake' not in command or 'power' not in command or 'revolutions' not in command or 'port' not in command:
@@ -27,7 +56,7 @@ def execute_motor(command, brick):
     m.turn(command['power'], command['revolutions'] * 360, command['brake'])
 
 
-### SENSORS ###
+### TOUCH SENSOR ###
 def execute_touch(command, brick):
     if 'condition' not in command or 'port' not in command:
           return
@@ -65,23 +94,109 @@ def execute_touch(command, brick):
           execute_commands(ifCommands, brick)
     elif notouch and t.get_sample():
           execute_commands(elseCommands, brick)
+
+### LIGHT SENSORS ###
+def execute_light(command, brick):
+    if 'port' not in command or 'condition' not in command:
+        return
     
-def execute_light():
-    print('execute light')
+    port = ports[command['port']]
+    cond = command['condition']
+    light = Light(brick, port)
+    comparison = compute_check(cond, light)
 
-def execute_ultrasonic():
-    print('execute ultrasonic')
+    # Dont execute any malformed commands
+    if comparison == None or 'while' not in cond or 'if' not in cond or 'else' not in cond:
+        return
+    
+    isWhile = cond['while']
+    ifCommands = cond['if']
+    elseCommands = cond['else']
+
+    if isWhile and comparison:
+        while compute_check(cond, light):
+            execute_commands(ifCommands, brick)
+    elif not isWhile and comparison:
+        execute_commands(ifCommands, brick)
+    elif not isWhile and not comparison:
+        execute_commands(elseCommands, brick)
+    
+    
+
+### ULTRASONIC SENSOR ###
+def execute_ultrasonic(command, brick):
+    if 'port' not in command or 'condition' not in command:
+        return
+
+    port = ports[command['port']]
+    cond = command['condition']
+    ultrasonic = Ultrasonic(brick, port)
+    comparison = compute_check(cond, ultrasonic)
+
+    # Dont execute any malformed commands
+    if comparison == None or 'while' not in cond or 'if' not in cond or 'else' not in cond:
+        return
+    
+    isWhile = cond['while']
+    ifCommands = cond['if']
+    elseCommands = cond['else']
+
+    if isWhile and comparison:
+        while compute_check(cond, ultrasonic):
+            execute_commands(ifCommands, brick)
+    elif not isWhile and comparison:
+        execute_commands(ifCommands, brick)
+    elif not isWhile and not comparison:
+        execute_commands(elseCommands, brick)
+
+### SOUND SENSOR ###
+def execute_sound(command, brick):
+    if 'port' not in command or 'condition' not in command:
+        return
+
+    port = ports[command['port']]
+    cond = command['condition']
+    sound = Sound(brick, port)
+    comparison = compute_check(cond, sound)
+
+    # Dont execute any malformed commands
+    if comparison == None or 'while' not in cond or 'if' not in cond or 'else' not in cond:
+        return
+    
+    isWhile = cond['while']
+    ifCommands = cond['if']
+    elseCommands = cond['else']
+
+    if isWhile and comparison:
+        while compute_check(cond, sound):
+            execute_commands(ifCommands, brick)
+    elif not isWhile and comparison:
+        execute_commands(ifCommands, brick)
+    elif not isWhile and not comparison:
+        execute_commands(elseCommands, brick)
 
 
-def execute_sound():
-    print('execute sound')
+### Play a sound ###
+def play_sound(command, brick):
+    
+    if 'file' in command:
+        file = command['file'].encode('ascii', 'ignore')
+        brick.play_sound_file(False, file + '.rso')
+        return
+    if 'freq' not in command and 'duration' not in command:
+        return
+    freq = command['freq']
+    duration = command['duration']
+    brick.play_tone_and_wait(freq,duration)
+    
 
 functions = {
     "motor": execute_motor,
     "touch": execute_touch,
     "light": execute_light,
     "ultrasonic": execute_ultrasonic,
-    "sound": execute_sound
+    "sound": execute_sound,
+    "playsound": play_sound
 }
     
 
@@ -113,7 +228,8 @@ def on_execute_code (*args):
 def execute_commands(commands, brick):
     #For each command, execute which type of command it is
     for command in commands:
-        functions[command['type']](command, brick)
+        if 'type' in command:
+            functions[command['type']](command, brick)
     
 
           
@@ -135,18 +251,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-def run_command_on_brick(brick, command):
-        if command["type"] == "sound":
-                print("trying to run the command")
-                freq = 475
-                duration = 1000
-                if 'freq' in command:
-                        freq = command["freq"]
-                if 'duration' in command:
-                        duration = command["duration"]
-                brick.play_tone_and_wait(freq,duration)
-        else:
-                print("command not run")
 
