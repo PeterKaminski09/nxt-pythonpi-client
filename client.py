@@ -215,13 +215,15 @@ def on_execute_code (*args):
     if 'commands' in params and 'address' in params:
         sock = BlueSock(params['address'])
         if sock:
-            brick = sock.connect()
             try:
+                brick = sock.connect()
                 execute_commands(params['commands'], brick)
+                sock.close()
+                print('finished code')
             except:
                 print("Error thrown executing commands")
-            sock.close()
-            print('finished code')
+            
+            
         else:
             print("issue connecting to nxt to run code")
     socketIO.emit('finished program')
