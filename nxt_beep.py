@@ -5,12 +5,11 @@
 # Change this ID to match the one on your brick.  You can find the ID by doing Settings / NXT Version.  
 # You will have to put a colon between each pair of digits.
 ID = '00:16:53:1B:E4:30'
-ID2 = '00:16:53:19:1E:AC'
 # This is all we need to import for the beep, but you'll need more for motors, sensors, etc.
 from nxt.bluesock import BlueSock
 
 # Create socket to NXT brick
-sock = 	BlueSock(ID2)
+sock = 	BlueSock(ID)
 
 # On success, socket is non-empty
 if sock:
