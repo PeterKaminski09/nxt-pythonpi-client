@@ -1,5 +1,6 @@
 sudo apt-get update
 sudo apt-get install bluetooth bluez blueman python-lightblue python-bluez
+sudo /usr/bin/easy_install virtualenv
 virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
