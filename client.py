@@ -1,9 +1,10 @@
 from socketIO_client import SocketIO
 from nxt.bluesock import BlueSock
-from nxt.motor import Motor, PORT_A, PORT_B, PORT_C
+from nxt.motor import Motor, SynchronizedMotors, PORT_A, PORT_B, PORT_C
 from nxt.sensor import Light, Sound, Touch, Ultrasonic
 from nxt.sensor import PORT_1, PORT_2, PORT_3, PORT_4
 import sys
+from time import sleep
 
 # Global variables
 socketIO = SocketIO('http://robocode-server.herokuapp.com', 80)
@@ -54,6 +55,20 @@ def execute_motor(command, brick):
     port = ports[command['port']]
     m = Motor(brick, port)
     m.turn(command['power'], command['revolutions'] * 360, command['brake'])
+
+### SYNC MOTOR ###
+def execute_syncmotor(command, brick):
+    print('sync')
+    if 'leadport' not in command or 'followport' not in command or 'turnratio' not in command or 'brake' not in command or 'power' not in command or 'revolutions' not in command:
+          return
+    print('executing sync')
+    #Execute the command
+    leadport = ports[command['leadport']]
+    followport = ports[command['followport']]
+    lead = Motor(brick, leadport)
+    follow = Motor(brick, followport)
+    sm = SynchronizedMotors(lead, follow, command['turnratio'])
+    sm.turn(command['power'], command['revolutions'] * 360, command['brake'])
 
 
 ### TOUCH SENSOR ###
@@ -188,15 +203,22 @@ def play_sound(command, brick):
     freq = command['freq']
     duration = command['duration']
     brick.play_tone_and_wait(freq,duration)
+
+def wait(command, brick):
+    if 'duration' in command:
+        sleep(command['duration'])
+        print('finished sleeping')
     
 
 functions = {
     "motor": execute_motor,
+    "syncmotor": execute_syncmotor,
     "touch": execute_touch,
     "light": execute_light,
     "ultrasonic": execute_ultrasonic,
     "sound": execute_sound,
-    "playsound": play_sound
+    "playsound": play_sound,
+    "wait": wait,
 }
     
 
