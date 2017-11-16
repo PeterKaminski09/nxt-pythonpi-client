@@ -204,6 +204,18 @@ def play_sound(command, brick):
     duration = command['duration']
     brick.play_tone_and_wait(freq,duration)
 
+### Run Loop ###
+def run_loop(command, brick):
+    
+    if 'iterations' not in command or 'commands' not in command:
+        return
+
+    iterations = command['iterations']
+    commands = command['commands']
+    for i in range(0, iterations):
+        execute_commands(commands, brick)
+    
+
 def wait(command, brick):
     if 'duration' in command:
         sleep(command['duration'])
@@ -219,6 +231,7 @@ functions = {
     "sound": execute_sound,
     "playsound": play_sound,
     "wait": wait,
+    "loop": run_loop
 }
     
 
@@ -242,7 +255,8 @@ def on_execute_code (*args):
                 execute_commands(params['commands'], brick)
                 sock.close()
                 print('finished code')
-            except:
+            except Exception as e:
+                print(e)
                 print("Error thrown executing commands")
             
             
